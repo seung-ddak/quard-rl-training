@@ -41,4 +41,4 @@
 | Try 1 | 실패 | only_positive_rewards=True → 학습 신호 없음 |
 | Try 2 | 실패 | default_joint_angles가 서있을 수 없는 자세 |
 | Try 3 | 중단 | j_LR_hip 축 반대 (URDF 버그) |
-| Try 4 | 대기 | 축 수정 완료, 학습 대기 중 |
+| Try 4 | 실패 (reward -0.59, ep_len 9.56) | 축 수정만으로 부족, 보상/댐핑 문제 |
