@@ -1,0 +1,8 @@
+=== Stage1 Walking - Try 1 Training Summary ===
+
+Total iterations: 2499
+Final episode length: 1002.0
+Max episode length: 1002.0
+Final mean reward: 38.5700
+Max mean reward: 38.9000
+Final noise std: 0.3600
