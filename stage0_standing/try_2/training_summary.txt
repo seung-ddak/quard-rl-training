@@ -1,0 +1,8 @@
+=== Stage0 Standing - Try 2 Training Summary ===
+
+Total iterations: 999
+Final episode length: 1002.0
+Max episode length: 1002.0
+Final mean reward: 92.1900
+Max mean reward: 98.0700
+Final noise std: 0.6700
