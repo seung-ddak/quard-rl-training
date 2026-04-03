@@ -4,7 +4,7 @@
 4족 로봇(Quard)이 평평한 지면 위에서 넘어지지 않고 안정적으로 서 있는 자세를 학습합니다.
 
 ## 로봇 사양 (새 모델 - 2026-04-03)
-- **총 질량**: ~3.06 kg
+- **총 질량**: ~3.93 kg
 - **몸체(base_link)**: 0.959 kg
 - **다리 구조**: shoulder → thigh → thigh_pully(fixed) → calf (4다리)
 - **Actuated joints**: 12개 (shoulder, hip, knee x 4)
