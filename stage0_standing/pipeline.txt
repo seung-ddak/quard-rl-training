@@ -1,0 +1,301 @@
+================================================================================
+  QUARD RL Training Pipeline Guide (초보자용)
+  4족 보행 로봇 강화학습 파이프라인 가이드
+================================================================================
+
+
+[0] 사전 준비
+================================================================================
+
+  환경 활성화:
+    $ conda activate isaacgym
+
+  프로젝트 구조:
+    RL/
+    ├── sim/quard_rl.urdf                          # 로봇 URDF 모델
+    ├── training_record/                           # 학습 기록 (자동 저장)
+    │   ├── stage0_standing/try_1/ ...
+    │   ├── stage1_basic_walk/try_1/ ...
+    │   └── ...
+    ├── legged_gym/legged_gym/
+    │   ├── envs/
+    │   │   ├── base/legged_robot.py               # 환경 + 보상 함수
+    │   │   ├── base/legged_robot_config.py        # 기본 config
+    │   │   ├── quard/quard_config.py              # Quard stage별 config
+    │   │   └── __init__.py                        # task 등록
+    │   ├── scripts/
+    │   │   ├── train.py                           # 학습 실행 (자동 기록 포함)
+    │   │   └── play.py                            # 평가/시각화
+    │   └── utils/
+    │       └── task_registry.py                   # task 등록 시스템
+    └── rsl_rl/rsl_rl/runners/
+        └── on_policy_runner.py                    # PPO 학습 루프
+
+
+[1] 학습 실행
+================================================================================
+
+  기본 명령어:
+    $ export LD_LIBRARY_PATH=/home/xiangyue/.conda/envs/isaacgym/lib:$LD_LIBRARY_PATH
+python legged_gym/legged_gym/scripts/train.py --task quard_stage0 --headless
+
+  주요 인자:
+    --task TASK_NAME      학습할 task 이름 (quard_stage0, quard_stage1 등)
+    --headless            GUI 없이 실행 (학습 시 권장)
+    --num_envs N          병렬 환경 수 (기본 4096)
+    --resume              체크포인트에서 이어서 학습
+    --load_run RUN_NAME   특정 run 폴더 이름 (예: "Apr03_15-03-52_")
+    --checkpoint ITER     체크포인트 iteration 번호
+
+  학습 시작하면 자동으로:
+    → training_record/stageX/try_N/ 폴더 생성
+    → 콘솔 출력을 train_log.txt에 실시간 저장
+    → 학습 완료 후 그래프 4개 + summary + reward config 자동 저장
+
+
+[2] 학습 결과 확인 (평가)
+================================================================================
+
+  시각화 실행:
+    $ python legged_gym/legged_gym/scripts/play.py --task quard_stage0
+
+  특정 체크포인트 평가:
+    $ python legged_gym/legged_gym/scripts/play.py --task quard_stage0 \
+        --load_run "Apr03_15-03-52_" --checkpoint 1000
+
+  자동 저장된 기록 확인:
+    training_record/stageX/try_N/
+    ├── train_log.txt          전체 콘솔 출력
+    ├── training_summary.txt   최종 지표 요약
+    ├── reward_config.txt      사용된 reward 설정
+    ├── mean_reward.png        보상 그래프
+    ├── episode_length.png     에피소드 길이 그래프
+    ├── noise_std.png          탐색 노이즈 그래프
+    └── reward_components.png  개별 보상 요소 그래프
+
+
+[3] Reward 파라미터 수정
+================================================================================
+
+  파일: legged_gym/legged_gym/envs/quard/quard_config.py
+
+  예시 (Stage 0 Standing):
+
+    class rewards(LeggedRobotCfg.rewards):
+        base_height_target = 0.20        # 목표 높이 (m)
+        only_positive_rewards = False     # True면 음수 보상 0으로 클리핑
+
+        class scales(LeggedRobotCfg.rewards.scales):
+            # === 양의 보상 (크면 더 강하게 유도) ===
+            base_height_gaussian = 3.0    # 높이 유지 보상
+            upright = 3.0                 # 수직 자세 보상
+            four_feet_contact = 4.0       # 4발 접지 보상
+            stand_still = 1.0             # 기본 자세 유지 보상
+
+            # === 음의 페널티 (절대값 크면 더 강하게 억제) ===
+            orientation = -2.0            # roll/pitch 기울기 페널티
+            ang_vel_xy = -1.0             # 각속도 진동 페널티
+            low_velocity = -1.0           # 움직임 페널티 (서 있기용)
+            dof_vel = -0.02               # 관절 속도 페널티
+            action_rate = -0.05           # 액션 변화율 페널티
+            torques = -0.001              # 토크 사용 페널티
+            collision = -1.0              # 충돌 페널티
+            dof_pos_limits = -10.0        # 관절 한계 초과 페널티
+
+            # 0.0으로 설정하면 해당 보상 비활성화
+            tracking_lin_vel = 0.0
+
+  수정 방법:
+    1. quard_config.py 열기
+    2. 원하는 stage의 rewards.scales 내 값 변경
+    3. 저장 후 학습 실행 → 자동으로 reward_config.txt에 기록됨
+
+
+[4] 새로운 Reward 함수 추가
+================================================================================
+
+  2단계 과정:
+
+  ── Step 1: 보상 함수 구현 ──
+
+    파일: legged_gym/legged_gym/envs/base/legged_robot.py
+    위치: 파일 맨 아래 _reward_* 메서드들 뒤에 추가
+
+    예시) 관절 에너지 소비 페널티:
+
+      def _reward_energy(self):
+          # 관절 토크 × 관절 속도 = 에너지 소비
+          return torch.sum(torch.abs(self.torques * self.dof_vel), dim=1)
+
+    규칙:
+    - 함수 이름: _reward_XXXX (XXXX가 config의 scale 이름과 일치해야 함)
+    - 반환값: (num_envs,) 크기의 torch tensor
+    - 양수 반환 → scale이 양수면 보상, 음수면 페널티
+    - self.로 접근 가능한 주요 변수:
+        self.dof_pos          관절 위치 (num_envs, num_dofs)
+        self.dof_vel          관절 속도
+        self.torques          관절 토크
+        self.root_states      base 위치/방향/속도 (num_envs, 13)
+        self.base_lin_vel     base 선속도 (num_envs, 3)
+        self.base_ang_vel     base 각속도 (num_envs, 3)
+        self.contact_forces   접촉 힘 (num_envs, num_bodies, 3)
+        self.feet_indices     발 body index 리스트
+        self.commands         속도 명령 (num_envs, num_commands)
+
+  ── Step 2: Config에 scale 추가 ──
+
+    파일: legged_gym/legged_gym/envs/quard/quard_config.py
+
+      class scales(LeggedRobotCfg.rewards.scales):
+          energy = -0.01    # ← 함수 이름 _reward_energy에서 "energy" 부분
+
+    → 이름만 맞추면 자동 등록됨 (0이 아닌 값이면 자동 활성화)
+
+
+[5] 새로운 Stage 추가
+================================================================================
+
+  ── Step 1: Config 클래스 작성 ──
+
+    파일: legged_gym/legged_gym/envs/quard/quard_config.py
+
+      class QuardStage2Cfg(LeggedRobotCfg):
+          class env(LeggedRobotCfg.env):
+              num_envs = 4096
+              num_observations = 48
+              num_actions = 12
+          class terrain(LeggedRobotCfg.terrain):
+              mesh_type = 'trimesh'         # 울퉁불퉁한 지형
+              curriculum = True
+          class rewards(LeggedRobotCfg.rewards):
+              class scales(LeggedRobotCfg.rewards.scales):
+                  tracking_lin_vel = 2.0
+                  # ... 보상 설정
+
+      class QuardStage2CfgPPO(LeggedRobotCfgPPO):
+          class runner(LeggedRobotCfgPPO.runner):
+              experiment_name = 'quard_stage2'
+              max_iterations = 2000
+              resume = True                  # 이전 stage 모델에서 시작
+              load_run = 'RUN_FOLDER_NAME'
+              checkpoint = ITER_NUMBER
+
+  ── Step 2: Task 등록 ──
+
+    파일: legged_gym/legged_gym/envs/__init__.py
+
+      task_registry.register("quard_stage2", LeggedRobot,
+                             QuardStage2Cfg(), QuardStage2CfgPPO())
+
+  ── Step 3: train.py 매핑 추가 (자동 기록용) ──
+
+    파일: legged_gym/legged_gym/scripts/train.py 내 TASK_STAGE_MAP:
+
+      TASK_STAGE_MAP = {
+          ...
+          'quard_stage2': ('stage2_robust_walk', 'Stage2 Robust Walk'),
+      }
+
+  ── Step 4: training_record 폴더 생성 ──
+
+    training_record/stage2_robust_walk/ 폴더 생성 + README.md 작성
+
+
+[6] 체크포인트에서 이어서 학습 (Resume)
+================================================================================
+
+  방법 A: Config에서 설정
+
+    class runner(LeggedRobotCfgPPO.runner):
+        resume = True
+        load_run = 'Apr03_15-03-52_'    # logs/quard_stageX/ 내 폴더 이름
+        checkpoint = 1000               # model_1000.pt
+
+  방법 B: 커맨드라인으로 설정
+
+    $ python legged_gym/legged_gym/scripts/train.py \
+        --task quard_stage1 --headless \
+        --resume --load_run "Apr03_15-03-52_" --checkpoint 1000
+
+  체크포인트 위치:
+    legged_gym/logs/quard_stageX/Apr03_15-03-52_/model_1000.pt
+
+
+[7] 주요 Reward 튜닝 팁
+================================================================================
+
+  1. 한 번에 여러 값을 크게 바꾸지 않기
+     → 한두 개씩 조절하며 효과 확인
+
+  2. Scale 크기 기준:
+     양의 보상: 1.0 ~ 5.0 (큰 값 = 더 강하게 유도)
+     음의 페널티: -0.001 ~ -2.0 (절대값 큰 값 = 더 강하게 억제)
+     주의: 페널티가 너무 크면 로봇이 아무것도 안 함
+
+  3. 학습 중 확인할 지표:
+     - Mean Reward: 꾸준히 상승해야 함
+     - Episode Length: max_episode_length에 도달하면 안정적
+     - Noise Std: 점차 감소하면 정책이 안정화되는 것
+
+  4. 실패 징후:
+     - Reward가 0 근처에서 정체 → 페널티가 너무 강함
+     - Episode Length가 매우 짧음 → 로봇이 바로 넘어짐
+     - Noise Std가 줄지 않음 → 보상 신호가 너무 약함
+
+
+[8] 전체 학습 커리큘럼
+================================================================================
+
+  Stage 0: 서기 (Standing)
+    목표: 4발로 안정적으로 서 있기
+    terrain: flat plane
+    commands: 없음 (정지)
+    핵심 보상: base_height, upright, four_feet_contact
+
+         ↓ Stage 0 성공 후
+
+  Stage 1: 평지 걷기 (Basic Walk)
+    목표: 속도 명령을 따라 평지에서 걷기
+    terrain: flat plane
+    commands: lin_vel, ang_vel
+    핵심 보상: tracking_lin_vel, tracking_ang_vel, feet_air_time
+    resume: Stage 0 최종 모델에서 시작
+
+         ↓ Stage 1 성공 후
+
+  Stage 2: 안정 걷기 (Robust Walk)
+    목표: 외란에도 넘어지지 않고 걷기
+    terrain: flat plane + push_robots
+    핵심 보상: tracking + 안정성 보상
+
+         ↓ Stage 2 성공 후
+
+  Stage 3: 험지 걷기 (Rough Terrain)
+    목표: 울퉁불퉁한 지형에서 걷기
+    terrain: trimesh + curriculum
+    핵심 보상: tracking + 지형 적응 보상
+
+
+[9] 빠른 참조 (Quick Reference)
+================================================================================
+
+  학습 시작:
+    $ conda activate isaacgym
+    $ python legged_gym/legged_gym/scripts/train.py --task quard_stage0 --headless
+
+  평가/시각화:
+    $ python legged_gym/legged_gym/scripts/play.py --task quard_stage0
+
+  이어서 학습:
+    $ python legged_gym/legged_gym/scripts/train.py --task quard_stage1 \
+        --headless --resume --load_run "RUN_NAME" --checkpoint ITER
+
+  주요 파일:
+    보상 수정     → quard_config.py (rewards.scales)
+    보상 함수     → legged_robot.py (_reward_XXXX 메서드)
+    task 등록     → envs/__init__.py
+    학습 기록     → training_record/stageX/try_N/
+
+================================================================================
+  END OF PIPELINE GUIDE
+================================================================================

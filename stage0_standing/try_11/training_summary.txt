@@ -1,0 +1,21 @@
+=== Stage0 Standing - Try 11 Training Summary ===
+
+Total iterations: 999
+Final episode length: 1002.0
+Max episode length: 1002.0
+Final mean reward: 172.4733
+Max mean reward: 172.8815
+Final noise std: 0.7899
+
+--- Final Reward Components ---
+  rew_action_rate: -0.1799
+  rew_ang_vel_xy: -0.1458
+  rew_base_height_gaussian: 3.9205
+  rew_collision: 0.0000
+  rew_dof_pos_limits: -0.0064
+  rew_dof_vel: -0.6015
+  rew_four_feet_contact: 1.6708
+  rew_orientation: -0.0014
+  rew_stand_still: 0.0001
+  rew_torques: -0.0371
+  rew_upright: 4.0023

@@ -1,0 +1,24 @@
+=== Stage0 Standing - Try 9 Training Summary ===
+
+Total iterations: 999
+Final episode length: 6.0
+Max episode length: 8.4
+Final mean reward: -0.8247
+Max mean reward: -0.8129
+Final noise std: 0.3476
+
+--- Final Reward Components ---
+  rew_action_rate: -0.0035
+  rew_ang_vel_xy: -0.0022
+  rew_base_height_gaussian: 0.0154
+  rew_collision: 0.0000
+  rew_dof_pos_limits: -0.0226
+  rew_dof_vel: -0.0463
+  rew_feet_force_symmetry: 0.0000
+  rew_feet_symmetry: 0.0000
+  rew_four_feet_contact: 0.0000
+  rew_low_velocity: -0.0108
+  rew_orientation: -0.0000
+  rew_stand_still: 0.0113
+  rew_torques: -0.0017
+  rew_upright: 0.0180
