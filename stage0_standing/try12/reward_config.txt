@@ -1,0 +1,29 @@
+=== Reward Configuration ===
+
+only_positive_rewards: True
+base_height_target: 0.2
+soft_dof_pos_limit: 0.9
+
+--- Reward Scales ---
+  action_rate: -0.02
+  ang_vel_xy: -0.35
+  base_height: 0.0
+  base_height_gaussian: 5.0
+  collision: -1.5
+  dof_acc: 0.0
+  dof_pos_limits: -4.0
+  dof_vel: -0.015
+  feet_air_time: 0.0
+  feet_force_symmetry: 0.0
+  feet_stumble: 0.0
+  feet_symmetry: 0.0
+  four_feet_contact: 6.0
+  lin_vel_z: -1.5
+  low_velocity: 0.0
+  orientation: -1.0
+  stand_still: 3.0
+  termination: -5.0
+  torques: -0.0003
+  tracking_ang_vel: 0.0
+  tracking_lin_vel: 0.0
+  upright: 5.0
