@@ -1,0 +1,9 @@
+=== Run Configuration ===
+
+experiment_name: quard_stage0
+stage_dir_name: stage0_standing
+max_iterations: 2000
+resume: True
+load_run: ../quard_stage0/Apr07_06-31-24_
+checkpoint: -1
+init_at_random_ep_len: False
