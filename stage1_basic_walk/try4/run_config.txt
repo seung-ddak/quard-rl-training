@@ -1,9 +1,0 @@
-=== Run Configuration ===
-
-experiment_name: quard_stage1
-stage_dir_name: stage1_basic_walk
-max_iterations: 4000
-resume: True
-load_run: ../quard_stage0/Apr04_18-10-58_
-checkpoint: 1000
-init_at_random_ep_len: False
