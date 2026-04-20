@@ -1,0 +1,12 @@
+=== Run Configuration ===
+
+args.task: quard_walk_9
+run_name: walk_9
+experiment_name: walk_9
+walk_dir_name: walk_9
+max_iterations: 1000
+resume: True
+load_run: /mnt/gstore/home/xiangyue/RL/legged_gym/logs/walk_8/Apr20_06-26-10_walk_8
+checkpoint: 12250
+save_interval: 50
+init_at_random_ep_len: False
