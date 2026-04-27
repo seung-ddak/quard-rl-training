@@ -1,0 +1,44 @@
+=== Reward Configuration ===
+
+only_positive_rewards: False
+base_height_target: 0.235
+soft_dof_pos_limit: 0.9
+target_air_time: N/A
+swing_height_target: N/A
+
+--- Reward Scales ---
+  action_rate: -0.012
+  all_feet_stepping: 0.0
+  ang_vel_xy: 0.0
+  base_height: 0.0
+  base_height_gaussian: 1.2
+  collision: -2.0
+  diagonal_gait: 2.0
+  diagonal_propulsion: 1.6
+  diagonal_time_balance: 0.0
+  dof_acc: 0.0
+  dof_pos_limits: 0.0
+  dof_vel: 0.0
+  feet_air_time: 0.0
+  feet_slip: -2.0
+  feet_stumble: 0.0
+  front_rear_stance_symmetry: 0.0
+  knee_range_violation: 0.0
+  left_right_stance_symmetry: 0.0
+  lin_vel_z: 0.0
+  no_lateral_motion: -1.0
+  orientation: -1.5
+  pose_hold: 0.0
+  rear_feet_slip: 0.0
+  self_collision: 0.0
+  stand_still: 0.0
+  stand_when_should_walk: 0.0
+  stuck_foot_penalty: 0.0
+  support_balance: 0.0
+  swing_height: 0.0
+  termination: -6.0
+  torques: 0.0
+  tracking_ang_vel: 0.0
+  tracking_lin_vel: 1.25
+  tripod_penalty: 0.0
+  yaw_turn_penalty: 0.0
