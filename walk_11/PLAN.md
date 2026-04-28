@@ -82,3 +82,34 @@ baseline 동일 (walk_10 try_17 model_9950), max_iterations 2000, entropy 0.008 
 ## try_2 결과
 
 (학습 완료 후 try_2/README.md 로 옮기며 채움)
+
+## try_6 — sharpening on try_5 peak (2026-04-28)
+
+try_5 결과: peak iter 10549 (rew 28.91, ep_len 720) 후 regression (rew 24.59, noise std 0.63).
+원인 추정: entropy_coef 0.008 이 후반엔 과한 탐색, trot 어색함 잔존.
+
+### 변경 (`quard_config.py:559-580`)
+
+| 항목 | try_5 | try_6 |
+|---|---|---|
+| baseline | walk_10 try_17 model_9950 | **walk_11 try_5 model_10550** (peak) |
+| entropy_coef | 0.008 | **0.005** (noise 진정, policy sharpening) |
+| diagonal_gait | 2.0 | **2.5** (어색한 trot 회복 +25%) |
+| max_iterations | 2000 | **1000** (sharpen 만, 과학습 방지) |
+| collision | -2.0 | -2.0 (유지) |
+| terminate_after_contacts_on | base+thigh | (유지) |
+
+### 학습 타겟
+
+10550 → 11550 (1000 iter, 약 80분 예상)
+
+### 평가 기준
+
+- ep_len 700+ 안정 (peak 회복 + 유지)
+- noise std < 0.5 (sharpening)
+- play.py 육안: trot 더 깔끔, thigh grazing 0
+- diagonal_gait ≥ 1.0
+
+### 가설
+
+clean trot peak 에서 출발 + entropy 낮춤 + diagonal_gait reward ↑ → policy 가 안정 trot 으로 수렴 (탐색 줄이고 활용 강화).
